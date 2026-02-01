@@ -40,7 +40,8 @@ function getEffectiveDefinitions(): import('$lib/types/settings').SettingDefinit
 
 export function getAllSettings(
 	settings: ExtendedDeviceParamKey[] | undefined,
-	showAdvanced: boolean = false
+	showAdvanced: boolean = false,
+	showHidden: boolean = false
 ): RenderableSetting[] {
 	// 1. Get all effective definitions (defaults + user overrides)
 	const explicitDefs = getEffectiveDefinitions();
@@ -104,7 +105,7 @@ export function getAllSettings(
 			// Filter out those that have no value AND no default value?
 			// Keeping consistent with original logic: show if we have a value (from device or default).
 			.filter((s) => s.value !== undefined || s.isSection)
-			.filter((s) => !s.hidden)
+			.filter((s) => showHidden || !s.hidden)
 			.filter((s) => showAdvanced || !s.advanced)
 	);
 }
@@ -136,15 +137,16 @@ export function downloadSettingsBackup(deviceId: string, settings: Record<string
 }
 
 import { decodeParamValue } from '$lib/utils/device';
+import { fetchSettingsAsync } from '$lib/api/device';
 
 export async function fetchAllSettings(
 	deviceId: string,
-	client: any,
+	_client: unknown,
 	token: string,
-	currentValues: Record<string, any>,
+	currentValues: Record<string, unknown>,
 	onProgress?: (progress: number, status: string) => void,
 	signal?: AbortSignal
-): Promise<Record<string, any>> {
+): Promise<Record<string, unknown>> {
 	// 1. Get all known keys
 	const explicitKeys = SETTINGS_DEFINITIONS.map((d) => d.key);
 
@@ -191,25 +193,28 @@ export async function fetchAllSettings(
 			if (signal?.aborted) return;
 
 			try {
-				const response = await client.GET('/v1/settings/{deviceId}/values', {
-					params: {
-						path: { deviceId },
-						query: { paramKeys: chunk }
-					},
-					headers: { Authorization: `Bearer ${token}` },
-					signal // Pass signal to fetch if supported by client, otherwise we check manually
-				});
+				const response = await fetchSettingsAsync(deviceId, chunk, token, { signal });
 
-				if (response.data?.items) {
-					for (const item of response.data.items) {
+				if (response.items) {
+					for (const item of response.items) {
 						if (item.key && item.value !== undefined) {
 							const def = SETTINGS_DEFINITIONS.find((d) => d.key === item.key);
-							const type = (def as any)?.value?.type ?? 'String';
+							const type =
+								(def as unknown as { value?: { type?: string } })?.value?.type ?? 'String';
 
 							newValues[item.key] = decodeParamValue({
 								key: item.key,
 								value: item.value,
-								type
+								type: type as
+									| 'String'
+									| 'Bool'
+									| 'Int'
+									| 'Float'
+									| 'Time'
+									| 'Json'
+									| 'Bytes'
+									| 'Unknown'
+									| undefined
 							});
 						}
 					}
@@ -217,8 +222,8 @@ export async function fetchAllSettings(
 				} else {
 					failCount += chunk.length;
 				}
-			} catch (e: any) {
-				if (e.name === 'AbortError' || signal?.aborted) {
+			} catch (e: unknown) {
+				if ((e as { name?: string })?.name === 'AbortError' || signal?.aborted) {
 					// Ignore abort errors
 					return;
 				}

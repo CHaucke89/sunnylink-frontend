@@ -1,8 +1,7 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 	import { deviceState } from '$lib/stores/device.svelte';
-	import { getCarList, setDeviceParams } from '$lib/api/device';
-	import { v1Client } from '$lib/api/client';
+	import { getCarList, setDeviceParams, fetchSettingsAsync } from '$lib/api/device';
 	import { logtoClient } from '$lib/logto/auth.svelte';
 	import { decodeParamValue, encodeParamValue } from '$lib/utils/device';
 
@@ -50,18 +49,23 @@
 
 		isLoadingValues = true;
 		try {
-			const res = await v1Client.GET('/v1/settings/{deviceId}/values', {
-				params: {
-					path: { deviceId },
-					query: { paramKeys: ['CarPlatformBundle', 'CarFingerprint', 'CarParamsPersistent'] }
-				},
-				headers: { Authorization: `Bearer ${token}` }
-			});
+			const res = await fetchSettingsAsync(
+				deviceId,
+				['CarPlatformBundle', 'CarFingerprint', 'CarParamsPersistent'],
+				token
+			);
 
-			if (res.data?.items) {
+			// Handle fetch errors
+			if (res.error) {
+				console.error('[VehicleSelector] Failed to fetch vehicle params:', res.error);
+				// Still allow the component to render, but values will be empty/default
+				return;
+			}
+
+			if (res.items) {
 				if (!deviceState.deviceValues[deviceId]) deviceState.deviceValues[deviceId] = {};
 
-				for (const item of res.data.items) {
+				for (const item of res.items) {
 					if (item.key === 'CarPlatformBundle') {
 						const val = decodeParamValue(item);
 						try {
@@ -85,15 +89,12 @@
 
 							if (base64) {
 								const binary = atob(base64);
-								// Simple heuristic: Car fingerprints are usually uppercase, alphanumeric, underscores, min length 4
+								// Simple heuristic: Car fingerprints are usually uppercase, alphanumeric, with an underscore, min length 4
 								// e.g. HONDA_CIVIC, TOYOTA_RAV4_2022
-								// We look for the longest contiguous string matching this pattern.
-								const matches = binary.match(/[A-Z0-9_]{4,}/g);
+								// We look for the first string matching this pattern.
+								const matches = binary.match(/(?=[A-Z0-9]*_)[A-Z0-9_]{4,}/g);
 								if (matches) {
-									// Filter out likely noise (e.g. very short random matches)
-									// Preference for strings containing underscores (common in openpilot fingerprints)
-									// or just pick the longest one.
-									const bestMatch = matches.sort((a, b) => b.length - a.length)[0];
+									const bestMatch = matches[0];
 									if (bestMatch) {
 										console.log(
 											'[VehicleSelector] Extracted fingerprint from CarParamsPersistent:',
