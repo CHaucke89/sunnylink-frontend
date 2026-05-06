@@ -87,9 +87,6 @@ class SchemaStore {
 			this.loading[deviceId] = true;
 		}
 		this.errors[deviceId] = null;
-		if (!hadCache) {
-			this.schemaUnavailable[deviceId] = false;
-		}
 
 		try {
 			const parsed = await fetchParamsMetadata(deviceId, token);
@@ -124,6 +121,7 @@ class SchemaStore {
 					};
 				}
 
+				this.schemaUnavailable[deviceId] = false;
 				if (hadCache) this.revalidationStatus[deviceId] = 'succeeded';
 			} else {
 				if (hadCache) this.revalidationStatus[deviceId] = 'failed';
