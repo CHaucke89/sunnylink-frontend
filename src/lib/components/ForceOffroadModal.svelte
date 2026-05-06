@@ -20,6 +20,7 @@
 	let pushing = $state(false);
 	let error = $state<string | null>(null);
 	let confirmed = $state(false);
+	let engaged = $derived(deviceId ? (deviceState.deviceTelemetry[deviceId]?.engaged ?? false) : false);
 
 	$effect(() => {
 		if (open) {
@@ -31,6 +32,10 @@
 
 	async function handleForceOffroad() {
 		if (!deviceId || !confirmed) return;
+		if (engaged) {
+			error = 'Disengage sunnypilot before enabling Always Offroad Mode.';
+			return;
+		}
 
 		pushing = true;
 		error = null;
@@ -143,7 +148,14 @@
 					</p>
 				</div>
 
-				{#if error}
+				{#if engaged}
+					<div
+						class="mb-6 flex items-center gap-3 rounded-lg bg-red-50 p-4 text-red-600 dark:bg-red-500/10 dark:text-red-400"
+					>
+						<AlertTriangle size={20} />
+						<p>sunnypilot is currently engaged. Disengage before enabling Always Offroad Mode.</p>
+					</div>
+				{:else if error}
 					<div
 						class="mb-6 flex items-center gap-3 rounded-lg bg-red-50 p-4 text-red-600 dark:bg-red-500/10 dark:text-red-400"
 					>
@@ -180,7 +192,7 @@
 				<button
 					class="btn min-w-[140px] transition-transform btn-error active:scale-[0.98] active:brightness-90"
 					onclick={handleForceOffroad}
-					disabled={!confirmed || pushing}
+					disabled={!confirmed || pushing || engaged}
 				>
 					{#if pushing}
 						<Loader2 size={18} class="mr-2 animate-spin" />
