@@ -735,7 +735,7 @@
 		<!-- Schema loaded but no panel for this category — render with unified style -->
 		{#if writableSettings.length > 0}
 			<div class="mx-auto w-full max-w-2xl space-y-6 xl:max-w-3xl">
-				{#each writableGroups as group (group.label ?? '__default__')}
+				{#each writableGroups as group, gi (group.label ?? `__default_${gi}`)}
 					{#if group.label}
 						<div class="px-4">
 							<p class="text-[0.9375rem] font-medium text-[var(--sl-text-1)]">{group.label}</p>
@@ -764,7 +764,7 @@
 		<!-- ═══ Legacy rendering (no schema available) — unified style ═══ -->
 		{#if writableSettings.length > 0}
 			<div class="mx-auto w-full max-w-2xl space-y-6 xl:max-w-3xl">
-				{#each writableGroups as group (group.label ?? '__default__')}
+				{#each writableGroups as group, gi (group.label ?? `__default_${gi}`)}
 					{#if group.label}
 						<div class="px-4">
 							<p class="text-[0.9375rem] font-medium text-[var(--sl-text-1)]">{group.label}</p>
@@ -810,7 +810,7 @@
 						</span>
 					</summary>
 					<div class="border-t border-[var(--sl-border)] p-4">
-						{#each readonlyGroups as group (group.label ?? '__ro_default__')}
+						{#each readonlyGroups as group, gi (group.label ?? `__ro_default_${gi}`)}
 							{#if group.label}
 								<div class="mt-4 mb-2 first:mt-0">
 									<p class="text-[0.9375rem] font-medium text-[var(--sl-text-1)]">{group.label}</p>
