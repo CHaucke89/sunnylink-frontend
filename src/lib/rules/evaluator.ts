@@ -43,7 +43,7 @@ function _referencesCapability(rule: Rule): boolean {
 	if (rule.type === 'capability') return true;
 	if (rule.type === 'not') return _referencesCapability(rule.condition);
 	if (rule.type === 'any' || rule.type === 'all')
-		return rule.conditions.some(_referencesCapability);
+		return (rule.conditions ?? []).some(_referencesCapability);
 	return false;
 }
 
@@ -92,10 +92,10 @@ export function evaluateRule(rule: Rule, ctx: RuleContext): boolean {
 			return !evaluateRule(rule.condition, ctx);
 
 		case 'any':
-			return rule.conditions.some((c) => evaluateRule(c, ctx));
+			return (rule.conditions ?? []).some((c) => evaluateRule(c, ctx));
 
 		case 'all':
-			return rule.conditions.every((c) => evaluateRule(c, ctx));
+			return (rule.conditions ?? []).every((c) => evaluateRule(c, ctx));
 
 		default:
 			return true; // Unknown rule types are permissive (forward compat)
@@ -133,7 +133,7 @@ export function requiresOffroad(enablement: Rule[] | undefined): boolean {
 	if (!enablement) return false;
 	return enablement.some((r) => {
 		if (r.type === 'offroad_only') return true;
-		if (r.type === 'all') return r.conditions.some((c) => c.type === 'offroad_only');
+		if (r.type === 'all') return (r.conditions ?? []).some((c) => c.type === 'offroad_only');
 		return false;
 	});
 }
@@ -150,7 +150,7 @@ export function isAdvancedSetting(rules: Rule[] | undefined): boolean {
 	if (!rules) return false;
 	function check(rule: Rule): boolean {
 		if (rule.type === 'param' && rule.key === 'ShowAdvancedControls') return true;
-		if (rule.type === 'all' || rule.type === 'any') return rule.conditions.some(check);
+		if (rule.type === 'all' || rule.type === 'any') return (rule.conditions ?? []).some(check);
 		if (rule.type === 'not') return check(rule.condition);
 		return false;
 	}
@@ -210,7 +210,7 @@ export function getDisabledReasons(
  *  (i.e. the rule's only purpose is the Advanced gate, not a real dependency). */
 function _isAdvancedFailure(rule: Rule): boolean {
 	if (rule.type === 'param' && rule.key === 'ShowAdvancedControls') return true;
-	if (rule.type === 'all' && rule.conditions.length === 1)
+	if (rule.type === 'all' && (rule.conditions ?? []).length === 1)
 		return _isAdvancedFailure(rule.conditions[0]!);
 	return false;
 }
@@ -289,7 +289,7 @@ function _describeFailedRule(
 		case 'any': {
 			// All conditions failed (OR not satisfied) — join descriptions with "or"
 			const descs: string[] = [];
-			for (const sub of rule.conditions) {
+			for (const sub of rule.conditions ?? []) {
 				const desc = _describeFailedRule(sub, ctx, paramTitleLookup, capLabels);
 				if (desc) descs.push(desc);
 			}
@@ -306,7 +306,7 @@ function _describeFailedRule(
 		}
 
 		case 'all': {
-			for (const sub of rule.conditions) {
+			for (const sub of rule.conditions ?? []) {
 				if (!evaluateRule(sub, ctx)) {
 					const desc = _describeFailedRule(sub, ctx, paramTitleLookup, capLabels);
 					if (desc) return desc;
@@ -365,7 +365,7 @@ export function collectParamDependencies(rules: Rule[] | undefined): string[] {
 		} else if (rule.type === 'not') {
 			walk(rule.condition);
 		} else if (rule.type === 'any' || rule.type === 'all') {
-			rule.conditions.forEach(walk);
+			(rule.conditions ?? []).forEach(walk);
 		}
 	}
 	rules.forEach(walk);

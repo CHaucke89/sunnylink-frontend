@@ -251,6 +251,11 @@ describe('any', () => {
 		const rule: Rule = { type: 'any', conditions: [] };
 		expect(evaluateRule(rule, ctx())).toBe(false);
 	});
+
+	it('returns false for missing conditions (malformed device schema)', () => {
+		const rule = { type: 'any' } as unknown as Rule;
+		expect(evaluateRule(rule, ctx())).toBe(false);
+	});
 });
 
 // ── all ─────────────────────────────────────────────────────────────────────
@@ -280,6 +285,11 @@ describe('all', () => {
 
 	it('returns true for empty conditions', () => {
 		const rule: Rule = { type: 'all', conditions: [] };
+		expect(evaluateRule(rule, ctx())).toBe(true);
+	});
+
+	it('returns true for missing conditions (malformed device schema)', () => {
+		const rule = { type: 'all' } as unknown as Rule;
 		expect(evaluateRule(rule, ctx())).toBe(true);
 	});
 });
