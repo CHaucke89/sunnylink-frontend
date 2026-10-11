@@ -5,11 +5,11 @@ const config = {
 		adapter: adapter({
 			pages: 'build',
 			assets: 'build',
-			// IMPORTANT for GitHub Pages SPA routing:
+			// Generate an SPA fallback file for static hosting targets.
 			fallback: '404.html',
 			precompress: false
 		}),
-		// Use the base path from CI (BASE_PATH=/sunnylink-frontend)
+		// Optional base path for subpath deployments.
 		paths: {
 			base: process.env.BASE_PATH || ''
 		}

@@ -1,0 +1,7 @@
+name = "sunnylink-frontend"
+compatibility_date = "2026-10-11"
+workers_dev = true
+
+[assets]
+directory = "./build"
+not_found_handling = "single-page-application"

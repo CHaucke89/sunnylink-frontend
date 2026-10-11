@@ -70,6 +70,48 @@ pnpm test
 pnpm test:coverage
 ```
 
+## Deploy To Cloudflare Workers
+
+This project is configured for Cloudflare Workers Static Assets.
+
+### 1. Prerequisites
+
+- Cloudflare account with your domain managed in Cloudflare DNS
+- Wrangler access (`npx wrangler` is used by the scripts below)
+
+### 2. Configure environment variables
+
+Set the public auth variables in your Worker (Cloudflare dashboard or Wrangler):
+
+- `PUBLIC_LOGTO_ENDPOINT`
+- `PUBLIC_LOGTO_APP_ID`
+
+### 3. Build and run locally with Workers
+
+```bash
+pnpm dev:workers
+```
+
+This builds the static output into `build/` and serves it through Workers.
+
+### 4. Deploy
+
+```bash
+pnpm deploy:workers
+```
+
+Worker/static assets configuration lives in `wrangler.toml`.
+
+### 5. Custom domain and auth callback
+
+After deployment:
+
+- Attach your custom domain to the Worker in Cloudflare.
+- In Logto, add your Cloudflare-hosted callback URL:
+  - `https://<your-domain>/auth/callback`
+
+If this callback URL is not configured in Logto, sign-in will fail.
+
 ## Code Coverage
 
 This project uses Vitest for code coverage reporting. Coverage is automatically generated in all GitHub Actions workflows:
@@ -88,7 +130,7 @@ The coverage tool is configured to be non-blocking by default (0% thresholds), b
 
 ## Project Structure
 
-```
+```text
 src/
 ├── routes/           # SvelteKit pages and layouts
 ├── components/       # Reusable UI components
