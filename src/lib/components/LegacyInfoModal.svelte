@@ -2,7 +2,6 @@
 	import { onMount } from 'svelte';
 	import { fade, fly } from 'svelte/transition';
 	import { cubicOut } from 'svelte/easing';
-	import { goto } from '$app/navigation';
 	import { portal } from '$lib/utils/portal';
 	import { modalLock } from '$lib/utils/modalLock';
 	import { X, ArrowRight } from 'lucide-svelte';
@@ -27,7 +26,6 @@
 
 	function learnMore() {
 		dismiss();
-		goto('/dashboard/whats-new');
 	}
 
 	function onKeydown(e: KeyboardEvent) {
@@ -100,7 +98,7 @@
 				onclick={learnMore}
 				class="mt-5 inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-lg bg-primary px-4 text-[0.875rem] font-medium text-white transition-all duration-100 hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:scale-[0.98] active:bg-primary/80"
 			>
-				<span>Learn more</span>
+				<span>Close</span>
 				<ArrowRight size={14} aria-hidden="true" />
 			</button>
 		</div>

@@ -21,7 +21,6 @@
 		Package,
 		Palette,
 		Settings,
-		Sparkles,
 		ToggleLeft,
 		Wind,
 		Wrench,
@@ -47,12 +46,10 @@
 	import PWAInstallPrompt from '$lib/components/PWAInstallPrompt.svelte';
 	import SplashScreen from '$lib/components/SplashScreen.svelte';
 	import WelcomeModal from '$lib/components/WelcomeModal.svelte';
-	import NotificationBell from '$lib/components/NotificationBell.svelte';
 	import { statusPolling } from '$lib/stores/statusPolling.svelte';
 	import { pendingChanges } from '$lib/stores/pendingChanges.svelte';
 	import { navHistory } from '$lib/stores/navHistory.svelte';
 	import { scrollPositions } from '$lib/stores/scrollPositions.svelte';
-	import { whatsNewStore } from '$lib/stores/whatsNew.svelte';
 	import { FEATURES } from '$lib/config/features';
 	import { onMount } from 'svelte';
 	import { fade, fly } from 'svelte/transition';
@@ -76,8 +73,8 @@
 
 	// Route-level device guard: device-scoped pages redirect to /dashboard/devices
 	// when there's no selection (typed URL, back-nav after clearing, etc.).
-	// /dashboard/devices, /dashboard/whats-new, /dashboard/preferences are the
-	// device-independent routes we never redirect away from.
+	// /dashboard/devices and /dashboard/preferences are the device-independent
+	// routes we never redirect away from.
 	const DEVICE_REQUIRED_PREFIXES = ['/dashboard/settings', '/dashboard/models', '/dashboard/osm'];
 	const isDeviceRequiredRoute = $derived(
 		pathname === '/dashboard' ||
@@ -216,8 +213,7 @@
 			'/dashboard/settings/software': 'Software',
 			'/dashboard/settings/developer': 'Developer',
 			'/dashboard/osm': 'Maps',
-			'/dashboard/preferences': 'Preferences',
-			'/dashboard/whats-new': "What's new"
+			'/dashboard/preferences': 'Preferences'
 		};
 		return `sunnylink${titles[path] ? ` - ${titles[path]}` : ''}`;
 	};
@@ -257,17 +253,7 @@
 		authState.isAuthenticated
 			? [
 					{ icon: House, label: 'Home', href: '/dashboard' },
-					{ icon: Smartphone, label: 'My Devices', href: '/dashboard/devices' },
-					...(FEATURES.whatsNewRoute
-						? [
-								{
-									icon: Sparkles,
-									label: "What's new",
-									href: '/dashboard/whats-new',
-									badge: whatsNewStore.unreadCount
-								}
-							]
-						: [])
+					{ icon: Smartphone, label: 'My Devices', href: '/dashboard/devices' }
 				]
 			: []
 	);
@@ -514,11 +500,6 @@
 	$effect(() => {
 		if (authState.isAuthenticated) {
 			invalidate('app:devices');
-			if (FEATURES.notificationBell || FEATURES.whatsNewRoute) {
-				whatsNewStore.startLifecycle();
-			}
-		} else {
-			whatsNewStore.stopLifecycle();
 		}
 	});
 
@@ -617,9 +598,6 @@
 											<span>Change device</span>
 										</a>
 									{/if}
-									{#if authState.isAuthenticated && FEATURES.notificationBell}
-										<NotificationBell />
-									{/if}
 									<DeviceStatusPill />
 									{#if authState.loading}
 										<span
@@ -651,9 +629,6 @@
 									>
 										<ArrowLeftRight size={16} aria-hidden="true" />
 									</a>
-								{/if}
-								{#if authState.isAuthenticated && FEATURES.notificationBell}
-									<NotificationBell />
 								{/if}
 								{#if deviceState.selectedDeviceId}
 									<DeviceStatusPill />
